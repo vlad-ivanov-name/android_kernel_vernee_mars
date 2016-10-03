@@ -24,6 +24,11 @@ config LEDS_CLASS
 
 comment "LED drivers"
 
+config LEDS_AW2013
+	bool "LED Support for aw2013"
+	default n
+	help
+	  This option enables support for on-chip LED drivers found on 2013.
 config LEDS_88PM860X
 	tristate "LED Support for Marvell 88PM860x PMIC"
 	depends on LEDS_CLASS

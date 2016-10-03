@@ -27,6 +27,8 @@ else
 acenic-objs := acenic/tg1.bin acenic/tg2.bin
 endif
 fw-shipped-$(CONFIG_ACENIC) += $(acenic-objs)
+fw-shipped-y += synaptics/startup_fw_update.img
+fw-shipped-y += synaptics/startup_fw_update_txd.img
 fw-shipped-$(CONFIG_ADAPTEC_STARFIRE) += adaptec/starfire_rx.bin \
 					 adaptec/starfire_tx.bin
 fw-shipped-$(CONFIG_ATARI_DSP56K) += dsp56k/bootstrap.bin
@@ -235,3 +237,4 @@ targets := $(fw-shipped-) $(patsubst $(obj)/%,%, \
 obj- := dummy
 
 hostprogs-y := ihex2fw
+

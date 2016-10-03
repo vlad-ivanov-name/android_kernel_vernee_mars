@@ -278,9 +278,16 @@ static inline void adjust_jiffies(unsigned long val, struct cpufreq_freqs *ci)
 }
 #endif
 
+void __weak arch_scale_set_curr_freq(int cpu, unsigned long freq) {}
+
+void __weak arch_scale_set_max_freq(int cpu, unsigned long freq) {}
+
 static void __cpufreq_notify_transition(struct cpufreq_policy *policy,
 		struct cpufreq_freqs *freqs, unsigned int state)
 {
+	struct cpumask cpus;
+	int cpu;
+
 	BUG_ON(irqs_disabled());
 
 	if (cpufreq_disabled())
@@ -315,6 +322,11 @@ static void __cpufreq_notify_transition(struct cpufreq_policy *policy,
 		pr_debug("FREQ: %lu - CPU: %lu\n",
 			 (unsigned long)freqs->new, (unsigned long)freqs->cpu);
 		trace_cpu_frequency(freqs->new, freqs->cpu);
+
+		arch_get_cluster_cpus(&cpus, arch_get_cluster_id(freqs->cpu));
+		for_each_cpu(cpu, &cpus)
+			arch_scale_set_curr_freq(cpu, freqs->new);
+
 		srcu_notifier_call_chain(&cpufreq_transition_notifier_list,
 				CPUFREQ_POSTCHANGE, freqs);
 		if (likely(policy) && likely(policy->cpu == freqs->cpu))
@@ -1667,6 +1679,9 @@ void cpufreq_suspend(void)
 {
 	struct cpufreq_policy *policy;
 
+	/* Avoid hotplug racing issue */
+	return;
+
 	if (!cpufreq_driver)
 		return;
 
@@ -1698,6 +1713,9 @@ suspend:
 void cpufreq_resume(void)
 {
 	struct cpufreq_policy *policy;
+
+	/* Avoid hotplug racing issue */
+	return;
 
 	if (!cpufreq_driver)
 		return;
@@ -2168,7 +2186,7 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 				struct cpufreq_policy *new_policy)
 {
 	struct cpufreq_governor *old_gov;
-	int ret;
+	int ret, cpu;
 
 	pr_debug("setting new policy for CPU %u: %u - %u kHz\n",
 		 new_policy->cpu, new_policy->min, new_policy->max);
@@ -2205,6 +2223,9 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 
 	policy->min = new_policy->min;
 	policy->max = new_policy->max;
+
+	for_each_cpu(cpu, policy->cpus)
+		arch_scale_set_max_freq(cpu, policy->max);
 
 	pr_debug("new min and max freqs are %u - %u kHz\n",
 		 policy->min, policy->max);
@@ -2312,6 +2333,51 @@ unlock:
 }
 EXPORT_SYMBOL(cpufreq_update_policy);
 
+static void setup_cpu0_symlink(struct device *dev, bool is_remove)
+{
+	static unsigned int root_cpu;
+
+	/* remove cpu0 symlink */
+	if (is_remove) {
+		if (dev->id == 0) {
+			sysfs_remove_link(&dev->kobj, "cpufreq");
+			root_cpu = 0;
+			pr_debug("%s()#%d: remove cpu0 symlink\n", __func__, __LINE__);
+		}
+	/* create or modify cpu0 symlink */
+	} else {
+		if (dev->id == root_cpu) {
+			struct device *cpu0_dev;
+			struct cpufreq_policy *policy;
+			unsigned int next_root_cpu;
+			int ret = -1;
+
+			cpu0_dev = get_cpu_device(0);
+
+			for_each_online_cpu(next_root_cpu) {
+				if (next_root_cpu == root_cpu)
+					continue;
+				else
+					break;
+			}
+
+			policy = cpufreq_cpu_get(next_root_cpu);
+
+			if (policy) {
+				if (root_cpu != 0)
+					sysfs_remove_link(&cpu0_dev->kobj, "cpufreq");
+				ret = sysfs_create_link(&cpu0_dev->kobj, &policy->kobj, "cpufreq");
+				if (!ret) {
+					pr_debug("%s()#%d: create/modify cpu0 symlink (from root_cpu = %d to next_root_cpu = %d)\n",
+						 __func__, __LINE__, root_cpu, next_root_cpu);
+					root_cpu = next_root_cpu;
+				}
+				cpufreq_cpu_put(policy);
+			}
+		}
+	}
+}
+
 static int cpufreq_cpu_callback(struct notifier_block *nfb,
 					unsigned long action, void *hcpu)
 {
@@ -2322,6 +2388,7 @@ static int cpufreq_cpu_callback(struct notifier_block *nfb,
 	if (dev) {
 		switch (action & ~CPU_TASKS_FROZEN) {
 		case CPU_ONLINE:
+			setup_cpu0_symlink(dev, true); /* remove cpu0 symlink */
 			__cpufreq_add_dev(dev, NULL);
 			break;
 
@@ -2330,10 +2397,14 @@ static int cpufreq_cpu_callback(struct notifier_block *nfb,
 			break;
 
 		case CPU_POST_DEAD:
+			if (dev->id != 0)
+				setup_cpu0_symlink(dev, false); /* modify cpu0 symlink */
 			__cpufreq_remove_dev_finish(dev, NULL);
+			setup_cpu0_symlink(dev, false); /* create cpu0 symlink */
 			break;
 
 		case CPU_DOWN_FAILED:
+			setup_cpu0_symlink(dev, true); /* remove cpu0 symlink */
 			__cpufreq_add_dev(dev, NULL);
 			break;
 		}
