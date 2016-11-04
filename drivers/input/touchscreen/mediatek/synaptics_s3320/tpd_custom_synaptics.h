@@ -54,9 +54,15 @@
 #define KEY_TO_VIRTUAL 
 
 #define TPD_BUTTON_HEIGH        (50)
+#if 0
 #define TPD_KEY_COUNT           3
 #define TPD_KEYS                { KEY_HOMEPAGE, KEY_MENU, KEY_BACK}
 #define TPD_KEYS_DIM            {{200,1950,50,TPD_BUTTON_HEIGH},{540,1950,50,TPD_BUTTON_HEIGH},{900,1950,50,TPD_BUTTON_HEIGH}}
+#else
+#define TPD_KEY_COUNT           0
+#define TPD_KEYS                { }
+#define TPD_KEYS_DIM            { }
+#endif
 
 //#define TPD_KEYS_DIM            {{200,1800,260,TPD_BUTTON_HEIGH},{540,1800,260,TPD_BUTTON_HEIGH},{900,1800,260,TPD_BUTTON_HEIGH}}
 
