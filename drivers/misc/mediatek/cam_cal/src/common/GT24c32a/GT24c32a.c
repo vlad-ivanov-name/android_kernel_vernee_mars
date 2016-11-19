@@ -1,5 +1,18 @@
 /*
- * Driver for EEPROM
+ * Copyright (C) 2015 MediaTek Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+
+/*
+ * Driver for CAM_CAL
  *
  *
  */
@@ -37,11 +50,9 @@
 /*#include <asm/system.h>//for SMP*/
 #endif
 /* #define EEPROMGETDLT_DEBUG */
-#define EEPROM_DEBUG_GT24C32A
-#ifdef EEPROM_DEBUG_GT24C32A
-#define PFX "GT24C32A"
-
-#define EEPROMDB(format, args...)      pr_debug(PFX "[%s] " format, __func__, ##args)
+/*#define EEPROM_DEBUG*/
+#ifdef EEPROM_DEBUG
+#define EEPROMDB pr_debug
 #else
 #define EEPROMDB(x, ...)
 #endif
