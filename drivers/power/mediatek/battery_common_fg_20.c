@@ -1682,7 +1682,11 @@ static void battery_update(struct battery_data *bat_data)
 
 	bat_data->BAT_TECHNOLOGY = POWER_SUPPLY_TECHNOLOGY_LIPO;
 	bat_data->BAT_HEALTH = POWER_SUPPLY_HEALTH_GOOD;
+#if defined(CONFIG_MTK_AOSP_BATTERY_METER)
 	bat_data->BAT_batt_vol = BMT_status.bat_vol * 1000;
+#else
+	bat_data->BAT_batt_vol = BMT_status.bat_vol;
+#endif
 	bat_data->BAT_batt_temp = BMT_status.temperature * 10;
 	bat_data->BAT_PRESENT = BMT_status.bat_exist;
 	
@@ -3887,7 +3891,11 @@ static int battery_probe(struct platform_device *dev)
 		battery_main.BAT_PRESENT = 1;
 		battery_main.BAT_TECHNOLOGY = POWER_SUPPLY_TECHNOLOGY_LIPO;
 		battery_main.BAT_CAPACITY = 100;
+#if defined(CONFIG_MTK_AOSP_BATTERY_METER)
 		battery_main.BAT_batt_vol = 4200000;
+#else
+		battery_main.BAT_batt_vol = 4200;
+#endif
 		battery_main.BAT_batt_temp = 220;
 
 		g_bat_init_flag = KAL_TRUE;

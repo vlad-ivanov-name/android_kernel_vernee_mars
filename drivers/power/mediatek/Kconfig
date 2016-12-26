@@ -311,3 +311,7 @@ config MTK_BIF_SUPPORT
 	  smart battery.
 	  Set No to disable BIF feature of a
 	  smart battery.
+
+config MTK_AOSP_BATTERY_METER
+	bool "Compute battery voltage in microvolts"
+	default n
