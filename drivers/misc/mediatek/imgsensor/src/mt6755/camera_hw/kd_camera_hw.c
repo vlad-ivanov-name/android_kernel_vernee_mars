@@ -20,20 +20,12 @@
 #include <linux/fs.h>
 #include <asm/atomic.h>
 
-
 #include "kd_camera_hw.h"
-
 
 #include "kd_imgsensor.h"
 #include "kd_imgsensor_define.h"
 #include "kd_camera_feature.h"
 
-
-
-
-/******************************************************************************
- * Debug configuration
-******************************************************************************/
 #define PFX "[kd_camera_hw]"
 #define PK_DBG_NONE(fmt, arg...)    do {} while (0)
 #define PK_DBG_FUNC(fmt, arg...)    pr_debug(PFX fmt, ##arg)
@@ -54,7 +46,6 @@
 #define PK_XLOG_INFO(fmt, args...)
 #endif
 
-
 #define IDX_PS_MODE 1
 #define IDX_PS_ON   2
 #define IDX_PS_OFF  3
@@ -70,17 +61,21 @@ extern void ISP_MCLK2_EN(BOOL En);
 extern void ISP_MCLK3_EN(BOOL En);
 
 
-u32 pinSetIdx = 0;		/* default main sensor */
-u32 pinSet[3][8] = {
+u32 pinSetIdx = 0;	 	/* default main sensor */
+u32 pinSet[3][12] = {
 	/* for main sensor */
-	{CAMERA_CMRST_PIN,
-	 CAMERA_CMRST_PIN_M_GPIO,	/* mode */
-	 GPIO_OUT_ONE,		/* ON state */
-	 GPIO_OUT_ZERO,		/* OFF state */
+	{
+	 // RST
+	 CAMERA_CMRST_PIN,
+	 CAMERA_CMRST_PIN_M_GPIO, // mode
+	 GPIO_OUT_ONE, // ON state
+	 GPIO_OUT_ZERO,	// OFF state
+	 // CMPDN
 	 CAMERA_CMPDN_PIN,
 	 CAMERA_CMPDN_PIN_M_GPIO,
 	 GPIO_OUT_ONE,
 	 GPIO_OUT_ZERO,
+	 // AVDD
 	 },
 	/* for sub sensor */
 	{CAMERA_CMRST1_PIN,
@@ -103,29 +98,26 @@ u32 pinSet[3][8] = {
 	 GPIO_OUT_ZERO,
 	 },
 };
+
 #ifndef CONFIG_MTK_LEGACY
-#define CUST_AVDD AVDD - AVDD
-#define CUST_DVDD DVDD - AVDD
-#define CUST_DOVDD DOVDD - AVDD
-#define CUST_AFVDD AFVDD - AVDD
-#define CUST_SUB_DVDD SUB_DVDD - AVDD
-#define CUST_MAIN2_DVDD MAIN2_DVDD - AVDD
+#define CUST_AVDD (AVDD - AVDD)
+#define CUST_DVDD (DVDD - AVDD - 1)
+#define CUST_DOVDD (DOVDD - AVDD - 1)
+#define CUST_AFVDD (AFVDD - AVDD - 1)
+#define CUST_SUB_DVDD (SUB_DVDD - AVDD - 1)
+#define CUST_MAIN2_DVDD (MAIN2_DVDD - AVDD - 1)
 #endif
 
-
 PowerCust PowerCustList = {
-	{
-		{GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},	/* for AVDD; */
-		{GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},	/* for DVDD; */
-		{GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},	/* for DOVDD; */
-		{GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},	/* for AFVDD; */
-		{GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},	/* for SUB_DVDD; */
-		{GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},	/* MAIN2_DVDD; */
-		/*{GPIO_SUPPORTED, GPIO_MODE_GPIO, Vol_Low}, */
+	 .PowerCustInfo = {
+		[CUST_AVDD] = {GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},
+		[CUST_DVDD] = {GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},
+		[CUST_DOVDD] = {GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},
+		[CUST_AFVDD] = {GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},
+		[CUST_SUB_DVDD] = {GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},
+		[CUST_MAIN2_DVDD] = {GPIO_UNSUPPORTED, GPIO_MODE_GPIO, Vol_Low},
 	 }
 };
-
-
 
 PowerUp PowerOnList = {
 	{
