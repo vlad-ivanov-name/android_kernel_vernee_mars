@@ -38,9 +38,10 @@
 #define PK_DBG_NONE(fmt, arg...)    do {} while (0)
 #define PK_DBG_FUNC(fmt, arg...)    pr_debug(PFX fmt, ##arg)
 
-#define DEBUG_CAMERA_HW_K
+#define DEBUG_CAMERA_HW_K 0
 #define CONTROL_AF_POWER 0
-#ifdef DEBUG_CAMERA_HW_K
+
+#if DEBUG_CAMERA_HW_K
 #define PK_DBG PK_DBG_FUNC
 #define PK_ERR(fmt, arg...)         pr_err(fmt, ##arg)
 #define PK_XLOG_INFO(fmt, args...) \
