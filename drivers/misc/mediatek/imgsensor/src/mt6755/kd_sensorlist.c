@@ -2959,20 +2959,22 @@ bool _hwPowerOn(PowerType type, int powerVolt)
 	struct regulator *reg = NULL;
 
 	PK_DBG("[_hwPowerOn]powertype:%d powerId:%d\n", type, powerVolt);
-    if (type == AVDD) {
-	reg = regVCAMA;
+
+	if (type == AVDD) {
+		reg = regVCAMA;
     } else if (type == DVDD) {
-	reg = regVCAMD;
+		reg = regVCAMD;
     } else if (type == DOVDD) {
-	reg = regVCAMIO;
+		reg = regVCAMIO;
     } else if (type == AFVDD) {
-	reg = regVCAMAF;
+		reg = regVCAMAF;
     } else if (type == SUB_DVDD) {
-	reg = regSubVCAMD;
+		reg = regSubVCAMD;
     } else if (type == MAIN2_DVDD) {
-	reg = regMain2VCAMD;
-    } else
-    	return ret;
+		reg = regMain2VCAMD;
+	} else {
+		return ret;
+	}
 
 	if (!IS_ERR(reg)) {
 		if (regulator_set_voltage(reg , powerVolt, powerVolt) != 0) {
